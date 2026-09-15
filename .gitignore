@@ -1,0 +1,26 @@
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+crash.log
+*.tfvars
+!*.tfvars.example
+
+# Segredos
+*.pem
+*.key
+*.crt
+.env
+secrets/
+
+# Ansible (gerado pelo Terraform)
+inventory.ini
+!inventory.ini.example
+
+# Cloud-init
+*-init-devops.iso
+
+# Sistema
+.DS_Store
+*.swp

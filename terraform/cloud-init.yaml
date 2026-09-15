@@ -1,0 +1,30 @@
+#cloud-config
+hostname: ${hostname}
+fqdn: ${hostname}.k8s.local
+manage_etc_hosts: true
+
+users:
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: users, admin, sudo
+    shell: /bin/bash
+    lock-passwd: false
+
+ssh_pwauth: true
+
+chpasswd:
+  list: |
+    ubuntu:123456
+  expire: False
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - qemu-guest-agent
+  - python3
+  - python3-pip
+
+runcmd:
+  - systemctl start qemu-guest-agent
+  - systemctl enable qemu-guest-agent
