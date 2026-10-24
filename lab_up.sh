@@ -3,13 +3,17 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-SSH_KEY="${HOME}/.ssh/id_ed25519.pub"
-if [ ! -f "${SSH_KEY}" ]; then
-  echo "!! Chave SSH ${SSH_KEY} não encontrada."
-  echo "   Gere com: ssh-keygen -t ed25519"
-  echo "   Ou ajuste ssh_public_key_path em terraform/terraform.tfvars"
-  exit 1
-fi
+# Mesmos caminhos de chave que o Terraform vai usar (default, TF_VAR_* ou tfvars)
+source scripts/chave_ssh.sh
+for chave in "${SSH_PUB_KEY}" "${SSH_PRIV_KEY}"; do
+  if [ ! -f "${chave}" ]; then
+    echo "!! Chave SSH ${chave} não encontrada."
+    echo "   Gere com: ssh-keygen -t ed25519"
+    echo "   Ou ajuste ssh_public_key_path e ssh_private_key_path em terraform/terraform.tfvars"
+    exit 1
+  fi
+done
+echo ">>> Chave SSH: ${SSH_PUB_KEY}"
 
 echo ">>> [1/2] Terraform apply"
 terraform -chdir=terraform init -upgrade

@@ -35,13 +35,16 @@ else
 fi
 
 echo ""
-echo ">>> Chave SSH"
-if [ -f "${HOME}/.ssh/id_ed25519.pub" ]; then
-  echo "[ok]    ${HOME}/.ssh/id_ed25519.pub"
-else
-  echo "[falta] chave SSH  ->  ssh-keygen -t ed25519"
-  FALHAS=$((FALHAS + 1))
-fi
+echo ">>> Chave SSH (caminhos lidos do Terraform)"
+source "$(dirname "$0")/scripts/chave_ssh.sh"
+for chave in "${SSH_PUB_KEY}" "${SSH_PRIV_KEY}"; do
+  if [ -f "${chave}" ]; then
+    echo "[ok]    ${chave}"
+  else
+    echo "[falta] ${chave}  ->  ssh-keygen -t ed25519, ou ajuste terraform/terraform.tfvars"
+    FALHAS=$((FALHAS + 1))
+  fi
+done
 
 echo ""
 if [ "$FALHAS" -eq 0 ]; then

@@ -58,6 +58,8 @@ Os recursos e a quantidade de workers são variáveis do Terraform. Os IPs são 
 ├── liga_cluster.sh          # Liga as VMs existentes
 ├── desliga_cluster.sh       # Desliga as VMs de forma graciosa
 ├── monitor.sh               # Acompanha o provisionamento (imagens, processos, VMs)
+├── scripts/
+│   └── chave_ssh.sh         # Lê os caminhos da chave SSH do Terraform
 ├── bootstrap_lab.sh         # Confere se o host tem tudo para rodar o lab
 └── RELATORIO_INTERVENCAO.md # Registro de manutenção e troubleshooting do cluster
 ```
@@ -69,7 +71,7 @@ Os recursos e a quantidade de workers são variáveis do Terraform. Os IPs são 
 - Terraform
 - Ansible com a coleção `community.general` (já incluída no pacote `ansible`)
 - `genisoimage`, usado pelo provider libvirt para gerar o disco do cloud-init
-- Chave SSH em `~/.ssh/id_ed25519` (gere com `ssh-keygen -t ed25519`)
+- Chave SSH, por padrão em `~/.ssh/id_ed25519` (gere com `ssh-keygen -t ed25519`)
 - Cerca de 7 GB de RAM livres para as três VMs
 
 O `bootstrap_lab.sh` confere todos esses itens e diz o que falta:
@@ -131,7 +133,14 @@ kubectl get pods -A
 
 ## Segurança
 
-O acesso às VMs é feito somente por chave SSH: o cloud-init instala a sua chave pública no usuário `ubuntu`, bloqueia a senha e desliga o login SSH por senha. Os caminhos das chaves ficam em `ssh_public_key_path` e `ssh_private_key_path` (`terraform/variables.tf`).
+O acesso às VMs é feito somente por chave SSH: o cloud-init instala a sua chave pública no usuário `ubuntu`, bloqueia a senha e desliga o login SSH por senha. Os caminhos das chaves ficam em `ssh_public_key_path` e `ssh_private_key_path` (`terraform/variables.tf`). Para usar outra chave, defina os dois em `terraform/terraform.tfvars`:
+
+```hcl
+ssh_public_key_path  = "~/.ssh/id_rsa.pub"
+ssh_private_key_path = "~/.ssh/id_rsa"
+```
+
+O `bootstrap_lab.sh` e o `lab_up.sh` leem esses mesmos valores, na ordem de precedência do Terraform (padrão, `TF_VAR_*`, `terraform.tfvars`), e conferem se as duas chaves existem antes de criar as VMs.
 
 A checagem da chave de host está desativada no inventário de propósito: as VMs são recriadas a cada `lab_up.sh` e reaproveitam IPs do DHCP, o que geraria alertas falsos de troca de chave. Isso é aceitável numa rede NAT isolada de laboratório, não em produção.
 
