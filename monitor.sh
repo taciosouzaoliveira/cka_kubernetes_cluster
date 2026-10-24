@@ -1,5 +1,6 @@
-cat > ~/monitor_lab.sh <<'EOF'
 #!/usr/bin/env bash
+# Acompanha o provisionamento do lab: imagens, processos e VMs.
+# Encerre com Ctrl+C.
 while true; do
   clear
   echo "===== $(date '+%H:%M:%S') ====="
@@ -7,7 +8,7 @@ while true; do
   echo "--- Imagem base ---"
   ls -lh /var/lib/libvirt/images/base-image-devops.qcow2 2>/dev/null || echo "  (ainda não existe)"
   echo ""
-  echo "--- Todos os arquivos ---"
+  echo "--- Arquivos mais recentes do pool ---"
   ls -lht /var/lib/libvirt/images/ 2>/dev/null | head -10
   echo ""
   echo "--- Processos ativos ---"
@@ -17,6 +18,3 @@ while true; do
   sudo virsh list --all
   sleep 3
 done
-EOF
-chmod +x ~/monitor_lab.sh
-~/monitor_lab.sh

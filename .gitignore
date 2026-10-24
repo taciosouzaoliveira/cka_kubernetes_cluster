@@ -10,3 +10,6 @@ teste.sh
 
 # System
 .DS_Store
+
+# Ansible (gerado pelo terraform apply)
+ansible/inventory.ini

@@ -1,9 +1,9 @@
-# 📜 Relatório de Intervenção Técnica: Cluster Kubernetes Home Lab
+# Relatório de Intervenção Técnica: Cluster Kubernetes Home Lab
 
 **Data:** 24 de Outubro de 2026
 **Ambiente:** Home Lab Dell (Libvirt + Terraform + Ansible)
 **Engenheiro:** Tácio Souza / Claude Code
-**Status Final:** 🟢 Operacional
+**Status Final:** Operacional
 
 ---
 

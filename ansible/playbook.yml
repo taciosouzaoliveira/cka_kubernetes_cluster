@@ -1,5 +1,22 @@
 ---
 # =================================================================================
+# PLAY 0: AGUARDAR AS VMS RESPONDEREM NO SSH
+# =================================================================================
+- name: Aguardar SSH e cloud-init nas VMs
+  hosts: k8s_cluster
+  gather_facts: false
+
+  tasks:
+    - name: Esperar a conexão SSH
+      wait_for_connection:
+        delay: 5
+        timeout: 300
+
+    - name: Esperar o cloud-init terminar
+      command: cloud-init status --wait
+      changed_when: false
+
+# =================================================================================
 # PLAY 1: PREPARAR TODOS OS NÓS
 # =================================================================================
 - name: Preparar todos os nós (Control Plane e Workers)
@@ -124,6 +141,9 @@
   hosts: controlplane
   become: yes
 
+  vars:
+    flannel_version: v0.28.10
+
   tasks:
     - name: Verificar se o cluster já foi inicializado
       stat:
@@ -148,8 +168,8 @@
         dest: /root/.kube/config
         remote_src: yes
 
-    - name: Instalar Flannel (CNI leve)
-      command: kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+    - name: Instalar Flannel {{ flannel_version }} (CNI)
+      command: kubectl apply -f https://github.com/flannel-io/flannel/releases/download/{{ flannel_version }}/kube-flannel.yml
       environment:
         KUBECONFIG: /root/.kube/config
       when: not k8s_initialized.stat.exists

@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
+# Provisiona as VMs com Terraform e monta o cluster com Ansible.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-echo ">>> [1/3] Terraform apply"
-cd terraform
-terraform init -upgrade
-terraform apply -auto-approve
-cd ..
+SSH_KEY="${HOME}/.ssh/id_ed25519.pub"
+if [ ! -f "${SSH_KEY}" ]; then
+  echo "!! Chave SSH ${SSH_KEY} não encontrada."
+  echo "   Gere com: ssh-keygen -t ed25519"
+  echo "   Ou ajuste ssh_public_key_path em terraform/terraform.tfvars"
+  exit 1
+fi
 
-echo ">>> [2/3] Aguardando SSH nas VMs"
-sleep 20
+echo ">>> [1/2] Terraform apply"
+terraform -chdir=terraform init -upgrade
+terraform -chdir=terraform apply -auto-approve
 
-echo ">>> [3/3] Ansible playbook"
-cd ansible
-ansible-playbook -i inventory.ini playbook.yml
-cd ..
+echo ">>> [2/2] Ansible playbook (aguarda o SSH das VMs antes de configurar)"
+ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
 
-echo ">>> Lab pronto. Use: ssh ubuntu@\$(grep controlplane -A1 ansible/inventory.ini | tail -1 | awk '{print \$2}' | cut -d= -f2)"
+CP_IP="$(terraform -chdir=terraform output -raw controlplane_ip)"
+echo ">>> Lab pronto. Acesse com: ssh ubuntu@${CP_IP}"

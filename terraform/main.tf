@@ -15,6 +15,11 @@ provider "libvirt" {
   uri = "qemu:///system"
 }
 
+# -------------------- CHAVE SSH --------------------
+locals {
+  ssh_public_key = trimspace(file(pathexpand(var.ssh_public_key_path)))
+}
+
 # -------------------- REDE --------------------
 resource "libvirt_network" "k8s_network" {
   name      = "k8s-network-devops"
@@ -39,14 +44,20 @@ resource "libvirt_volume" "base_image" {
 resource "libvirt_cloudinit_disk" "controlplane_init" {
   name      = "controlplane-init-devops.iso"
   pool      = "default"
-  user_data = templatefile("${path.module}/cloud-init.yaml", { hostname = "controlplane" })
+  user_data = templatefile("${path.module}/cloud-init.yaml", {
+    hostname       = "controlplane"
+    ssh_public_key = local.ssh_public_key
+  })
 }
 
 resource "libvirt_cloudinit_disk" "worker_init" {
   count     = var.worker_count
   name      = "worker-${count.index + 1}-init-devops.iso"
   pool      = "default"
-  user_data = templatefile("${path.module}/cloud-init.yaml", { hostname = "worker-${count.index + 1}" })
+  user_data = templatefile("${path.module}/cloud-init.yaml", {
+    hostname       = "worker-${count.index + 1}"
+    ssh_public_key = local.ssh_public_key
+  })
 }
 
 # -------------------- VOLUMES DE DISCO --------------------
@@ -103,6 +114,15 @@ resource "libvirt_domain" "worker" {
   }
 }
 
+# -------------------- SAÍDAS --------------------
+output "controlplane_ip" {
+  value = libvirt_domain.controlplane.network_interface[0].addresses[0]
+}
+
+output "worker_ips" {
+  value = [for w in libvirt_domain.worker : w.network_interface[0].addresses[0]]
+}
+
 # -------------------- INVENTÁRIO ANSIBLE --------------------
 resource "local_file" "ansible_inventory" {
   filename = "../ansible/inventory.ini"
@@ -122,7 +142,8 @@ workers
 
 [all:vars]
 ansible_user=ubuntu
-ansible_ssh_common_args='-o StrictHostKeyChecking=no'
-ansible_ssh_pass=123456
+ansible_ssh_private_key_file=${pathexpand(var.ssh_private_key_path)}
+# As VMs são recriadas e reaproveitam IPs do DHCP, por isso a chave do host não é guardada
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 EOT
 }

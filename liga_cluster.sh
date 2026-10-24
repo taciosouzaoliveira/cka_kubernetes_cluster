@@ -1,5 +1,6 @@
-#!/bin/bash
-echo "🚀 Iniciando o cluster Kubernetes..."
+#!/usr/bin/env bash
+# Liga as VMs do cluster que estiverem desligadas.
+echo ">>> Iniciando o cluster Kubernetes"
 for vm in $(sudo virsh list --all --name | grep 'k8s-'); do
     state=$(sudo virsh domstate "$vm" 2>/dev/null)
     if [ "$state" = "desligado" ] || [ "$state" = "shut off" ]; then
@@ -9,4 +10,4 @@ for vm in $(sudo virsh list --all --name | grep 'k8s-'); do
         echo "-> $vm já está em execução."
     fi
 done
-echo "✅ Processo concluído!"
+echo ">>> Processo concluído."
